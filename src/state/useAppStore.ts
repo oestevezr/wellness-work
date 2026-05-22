@@ -4,6 +4,8 @@ import { recommendRoutine } from "../domain/routineEngine";
 import { createAppStorage } from "../persistence/storage";
 import type { HydrationEntry, Reminder, Session, UserProfile, WorkMode } from "../types/models";
 
+const DEFAULT_HYDRATION_GOAL_ML = 2000;
+
 interface AppState {
   initialized: boolean;
   profile: UserProfile | null;
@@ -100,7 +102,7 @@ export function useHydrationProgress() {
   const entries = useAppStore((state) => state.hydrationEntries);
 
   const total = hydrationTotal(entries);
-  const goal = profile?.hydrationGoal ?? 1;
+  const goal = profile?.hydrationGoal ?? DEFAULT_HYDRATION_GOAL_ML;
 
   return {
     total,

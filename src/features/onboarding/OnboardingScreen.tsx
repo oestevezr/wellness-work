@@ -26,7 +26,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [weightKg, setWeightKg] = useState(70);
 
   const recommendedGoal = useMemo(() => defaultHydrationGoalFromWeight(weightKg), [weightKg]);
-  const [hydrationGoal, setHydrationGoal] = useState(recommendedGoal);
+  const [hydrationGoal, setHydrationGoal] = useState(() => defaultHydrationGoalFromWeight(70));
 
   return (
     <section className="mx-auto max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
