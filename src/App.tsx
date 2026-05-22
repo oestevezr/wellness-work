@@ -1,49 +1,50 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useEffect } from "react";
+import { FloatingWidget } from "./components/FloatingWidget";
+import { DashboardScreen } from "./features/dashboard/DashboardScreen";
+import { OnboardingScreen } from "./features/onboarding/OnboardingScreen";
+import { useAppStore, useCurrentRecommendation, useHydrationProgress } from "./state/useAppStore";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const initialized = useAppStore((state) => state.initialized);
+  const profile = useAppStore((state) => state.profile);
+  const currentMode = useAppStore((state) => state.currentMode);
+  const sessions = useAppStore((state) => state.sessions);
+  const initialize = useAppStore((state) => state.initialize);
+  const completeOnboarding = useAppStore((state) => state.completeOnboarding);
+  const switchMode = useAppStore((state) => state.switchMode);
+  const addHydration = useAppStore((state) => state.addHydration);
+  const recommendation = useCurrentRecommendation();
+  const hydration = useHydrationProgress();
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+  useEffect(() => {
+    void initialize();
+  }, [initialize]);
+
+  if (!initialized) {
+    return <main className="grid min-h-screen place-items-center bg-slate-50">Loading…</main>;
   }
 
+  const activeSession = sessions[sessions.length - 1];
+  const modeMinutes = activeSession?.startTime
+    ? Math.max(0, Math.round((Date.now() - new Date(activeSession.startTime).getTime()) / 60000))
+    : 0;
+
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
+      {profile ? (
+        <DashboardScreen currentMode={currentMode} onModeSwitch={switchMode} onQuickHydration={addHydration} />
+      ) : (
+        <OnboardingScreen onComplete={completeOnboarding} />
+      )}
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+      {profile && (
+        <FloatingWidget
+          mode={currentMode}
+          modeMinutes={modeMinutes}
+          hydrationDisplay={`${Math.round(hydration.total / 250)}/${Math.max(1, Math.round(hydration.goal / 250))}`}
+          nextEyeBreakMinutes={recommendation.nextReminderInMinutes}
         />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+      )}
     </main>
   );
 }
